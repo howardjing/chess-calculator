@@ -7,7 +7,8 @@
     "flow-bin": "^0.54.0",
     "react": "^15.6.1",
     "react-dom": "^15.6.1",
-    "react-scripts": "1.0.13"
+    "react-scripts": "1.0.13",
+    "styled-components": "^2.1.2"
   },
   "scripts": {
     "start": "BROWSER=none react-scripts start",
