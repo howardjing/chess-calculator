@@ -13,12 +13,12 @@ import WhiteRook from './white-rook';
 import WhiteBishop from './white-bishop';
 import WhiteKnight from './white-knight';
 import WhitePawn from './white-pawn';
-import type { Color, Piece as _Piece } from '../chess';
+import type { Color, PieceType } from '../chess';
 
 type Props = {
   piece: {
     color: Color,
-    type: _Piece,
+    type: PieceType,
   },
   width: number,
   height: number,
@@ -44,7 +44,7 @@ const MAPPING = {
 };
 
 // $FlowFixMe - mad about MAPPING[color][type]
-const component = (color: Color, type: _Piece) => MAPPING[color][type] || null;
+const component = (color: Color, type: PieceType) => MAPPING[color][type] || null;
 
 const PieceComponent = ({
   piece,
