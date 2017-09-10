@@ -16,5 +16,11 @@
     "test": "react-scripts test --env=jsdom",
     "eject": "react-scripts eject",
     "flow": "flow"
+  },
+  "env": {
+    "jest": true
+  },
+  "devDependencies": {
+    "flow-typed": "^2.1.5"
   }
 }
