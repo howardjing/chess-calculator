@@ -156,6 +156,36 @@ class Rook implements Piece {
   }
 }
 
+class Queen implements Piece {
+  color: Color;
+  position: Position;
+
+  constructor(color: Color, position: Position) {
+    this.color = color;
+    this.position = position;
+  }
+
+  attacking = (): Position[] => {
+    const { position } = this;
+    // north
+    return attacks(position, pos => buildPosition(pos.row - 1, pos.col))
+      // west
+      .concat(attacks(position, pos => buildPosition(pos.row, pos.col - 1)))
+      // east
+      .concat(attacks(position, pos => buildPosition(pos.row, pos.col + 1)))
+      // south
+      .concat(attacks(position, pos => buildPosition(pos.row + 1, pos.col)))
+      // northwest
+      .concat(attacks(position, pos => buildPosition(pos.row - 1, pos.col - 1)))
+      // northeast
+      .concat(attacks(position, pos => buildPosition(pos.row - 1, pos.col + 1)))
+      // southwest
+      .concat(attacks(position, pos => buildPosition(pos.row + 1, pos.col - 1)))
+      // southeast
+      .concat(attacks(position, pos => buildPosition(pos.row + 1, pos.col + 1)));
+  }
+}
+
 // const findThreats = (pieces, player): => {
 //   const positions = {};
 
@@ -168,6 +198,7 @@ export {
   validPositions,
   buildPosition,
   King,
+  Queen,
   Rook,
   Knight,
   Bishop,
