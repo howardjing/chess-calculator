@@ -123,10 +123,36 @@ class Bishop implements Piece {
 
   attacking = (): Position[] => {
     const { position } = this;
+    // northwest
     return attacks(position, pos => buildPosition(pos.row - 1, pos.col - 1))
+      // northeast
       .concat(attacks(position, pos => buildPosition(pos.row - 1, pos.col + 1)))
+      // southwest
       .concat(attacks(position, pos => buildPosition(pos.row + 1, pos.col - 1)))
+      // southeast
       .concat(attacks(position, pos => buildPosition(pos.row + 1, pos.col + 1)));
+  }
+}
+
+class Rook implements Piece {
+  color: Color;
+  position: Position;
+
+  constructor(color: Color, position: Position) {
+    this.color = color;
+    this.position = position;
+  }
+
+  attacking = (): Position[] => {
+    const { position } = this;
+    // north
+    return attacks(position, pos => buildPosition(pos.row - 1, pos.col))
+      // west
+      .concat(attacks(position, pos => buildPosition(pos.row, pos.col - 1)))
+      // east
+      .concat(attacks(position, pos => buildPosition(pos.row, pos.col + 1)))
+      // south
+      .concat(attacks(position, pos => buildPosition(pos.row + 1, pos.col)))
   }
 }
 
@@ -142,6 +168,7 @@ export {
   validPositions,
   buildPosition,
   King,
+  Rook,
   Knight,
   Bishop,
   Pawn,
