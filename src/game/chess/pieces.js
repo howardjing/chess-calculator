@@ -101,6 +101,17 @@ class Knight implements Piece {
   }
 }
 
+const attacks = (
+  position: Position,
+  advance: (pos: Position) => Position,
+  positions: Position[] = [],
+): Position[] => {
+  const next = advance(position);
+  if (!isInBounds(next)) { return positions; }
+
+  return attacks(next, advance, positions.concat([next]));
+};
+
 class Bishop implements Piece {
   color: Color;
   position: Position;
@@ -111,7 +122,11 @@ class Bishop implements Piece {
   }
 
   attacking = (): Position[] => {
-
+    const { position } = this;
+    return attacks(position, pos => buildPosition(pos.row - 1, pos.col - 1))
+      .concat(attacks(position, pos => buildPosition(pos.row - 1, pos.col + 1)))
+      .concat(attacks(position, pos => buildPosition(pos.row + 1, pos.col - 1)))
+      .concat(attacks(position, pos => buildPosition(pos.row + 1, pos.col + 1)));
   }
 }
 
@@ -128,5 +143,6 @@ export {
   buildPosition,
   King,
   Knight,
+  Bishop,
   Pawn,
 };
