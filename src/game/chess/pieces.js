@@ -1,5 +1,5 @@
 // @flow
-import type { Color } from './index';
+import type { Color, PieceType } from './index';
 
 type Position = {
   row: number,
@@ -8,10 +8,16 @@ type Position = {
 
 const buildPosition = (row: number, col: number): Position => ({ row, col });
 
-interface Piece {
+class Piece {
   color: Color;
   position: Position;
-  attacking(): Position[];
+
+  constructor(color: Color, position: Position) {
+    this.color = color;
+    this.position = position;
+  }
+
+  attacking = (): Position[] => [];
 }
 
 const isInBounds = (position: Position, n: number = 8): boolean => (
@@ -23,15 +29,7 @@ const isInBounds = (position: Position, n: number = 8): boolean => (
 
 const validPositions = (positions: Position[]): Position[] => positions.filter(pos => isInBounds(pos));
 
-class Pawn implements Piece {
-  color: Color;
-  position: Position;
-
-  constructor(color: Color, position: Position) {
-    this.color = color;
-    this.position = position;
-  }
-
+class Pawn extends Piece {
   attacking = (): Position[] => {
     const { row, col } = this.position;
     const newRow = this._advance(row);
@@ -44,15 +42,7 @@ class Pawn implements Piece {
   _advance = (n: number): number => this.color === 'w' ? n + 1 : n - 1;
 }
 
-class King implements Piece {
-  color: Color;
-  position: Position;
-
-  constructor(color: Color, position: Position) {
-    this.color = color;
-    this.position = position;
-  }
-
+class King extends Piece {
   attacking = (): Position[] => {
     const { row, col } = this.position;
 
@@ -73,15 +63,7 @@ class King implements Piece {
   }
 }
 
-class Knight implements Piece {
-  color: Color;
-  position: Position;
-
-  constructor(color: Color, position: Position) {
-    this.color = color;
-    this.position = position;
-  }
-
+class Knight extends Piece {
   attacking = (): Position[] => {
     const { row, col } = this.position;
 
@@ -112,15 +94,7 @@ const attacks = (
   return attacks(next, advance, positions.concat([next]));
 };
 
-class Bishop implements Piece {
-  color: Color;
-  position: Position;
-
-  constructor(color: Color, position: Position) {
-    this.color = color;
-    this.position = position;
-  }
-
+class Bishop extends Piece {
   attacking = (): Position[] => {
     const { position } = this;
     // northwest
@@ -134,15 +108,7 @@ class Bishop implements Piece {
   }
 }
 
-class Rook implements Piece {
-  color: Color;
-  position: Position;
-
-  constructor(color: Color, position: Position) {
-    this.color = color;
-    this.position = position;
-  }
-
+class Rook extends Piece {
   attacking = (): Position[] => {
     const { position } = this;
     // north
@@ -156,15 +122,7 @@ class Rook implements Piece {
   }
 }
 
-class Queen implements Piece {
-  color: Color;
-  position: Position;
-
-  constructor(color: Color, position: Position) {
-    this.color = color;
-    this.position = position;
-  }
-
+class Queen extends Piece {
   attacking = (): Position[] => {
     const { position } = this;
     // north
@@ -186,9 +144,41 @@ class Queen implements Piece {
   }
 }
 
+const buildPiece = (type: PieceType, color: Color, position: Position): Piece => {
+  switch(type) {
+    case 'b': return new Bishop(color, position);
+    case 'k': return new King(color, position);
+    case 'n': return new Knight(color, position);
+    case 'p': return new Pawn(color, position);
+    case 'q': return new Queen(color, position);
+    case 'r': return new Rook(color, position);
+    default: throw new Error(`Unknown piece type ${type}`);
+  };
+}
+
+function filterNulls<T>(arr: Array<?T>): Array<T> {
+  const result = [];
+  for (var i = 0; i < arr.length; i++) {
+    if (arr[i] != null) {
+      result.push(arr[i]);
+    }
+  }
+  return result;
+}
+
+/**
+ * board.flatMap((row, i) => row.map((piece, j) => new Piece(...)))
+ */
+const fromBoard = (board: (?{ type: PieceType, color: Color })[][]): Piece[] =>
+  board.map((row, i) =>
+    filterNulls(row.map((piece, j) => {
+      if (!piece) { return null; }
+      return buildPiece(piece.type, piece.color, buildPosition(i, j))
+    }))
+  ).reduce((accum, row) => accum.concat(row), []);
+
 // const findThreats = (pieces, player): => {
 //   const positions = {};
-
 //   pieces.forEach(piece => {
 
 //   })
@@ -197,6 +187,7 @@ class Queen implements Piece {
 export {
   validPositions,
   buildPosition,
+  fromBoard,
   King,
   Queen,
   Rook,
