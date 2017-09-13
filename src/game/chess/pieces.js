@@ -171,13 +171,6 @@ const fromBoard = (board: (?{ type: PieceType, color: Color })[][]): Piece[] =>
     }))
   );
 
-// const findThreats = (pieces, player): => {
-//   const positions = {};
-//   pieces.forEach(piece => {
-
-//   })
-// }
-
 export {
   validPositions,
   fromBoard,

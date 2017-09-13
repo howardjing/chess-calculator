@@ -14,7 +14,6 @@ const findThreats = (chess: Chess, player: Color = 'w'): { [string]: number } =>
   const threats = {};
   pieces.forEach((piece: Piece) => {
     piece.attacking().forEach((position: Position) => {
-      console.log("PIECE", piece, "attacking", toLabel(position));
       const key = toLabel(position);
       threats[key] = incrementThreat(player, piece.color, threats[key] || 0);
     })
