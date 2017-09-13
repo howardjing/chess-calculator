@@ -9,13 +9,13 @@ describe('Pawn', () => {
       const white = new Pawn('w', buildPosition(3, 4));
 
       expect(black.attacking()).toEqual([
-        buildPosition(2, 3),
-        buildPosition(2, 5),
+        buildPosition(4, 3),
+        buildPosition(4, 5),
       ]);
 
       expect(white.attacking()).toEqual([
-        buildPosition(4, 3),
-        buildPosition(4, 5),
+        buildPosition(2, 3),
+        buildPosition(2, 5),
       ]);
     });
   });

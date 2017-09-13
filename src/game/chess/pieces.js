@@ -35,7 +35,7 @@ class Pawn extends Piece {
     ]);
   }
 
-  _advance = (n: number): number => this.color === 'w' ? n + 1 : n - 1;
+  _advance = (n: number): number => this.color === 'w' ? n - 1 : n + 1;
 }
 
 class King extends Piece {
