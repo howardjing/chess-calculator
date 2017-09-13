@@ -20,8 +20,8 @@ type Props = {
     color: Color,
     type: PieceType,
   },
-  width: number,
-  height: number,
+  width: number | string,
+  height: number | string,
 };
 
 const MAPPING = {

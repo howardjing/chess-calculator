@@ -3,8 +3,8 @@
 import React from 'react';
 
 type Props = {
-  width: number,
-  height: number,
+  width: number | string,
+  height: number | string,
 };
 
 const WhiteBishop = ({

@@ -35,8 +35,8 @@ class Game extends PureComponent<Props> {
                 >
                   {piece ? <Piece
                     piece={chess.get(pos)}
-                    width={40}
-                    height={40}
+                    width={'100%'}
+                    height={'100%'}
                   /> : null}
                   <Label>{threat}</Label>
                 </Square>
@@ -78,8 +78,8 @@ const Row = styled.div`
 `;
 
 const Square = styled.div`
-  width: 40px;
-  height: 40px;
+  width: 70px;
+  height: 70px;
   position: relative;
 `;
 
