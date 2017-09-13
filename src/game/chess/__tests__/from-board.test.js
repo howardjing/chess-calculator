@@ -1,8 +1,9 @@
 // @flow
 import {
-  fromBoard, buildPosition,
+  fromBoard,
   King, Queen, Rook, Knight, Bishop, Pawn,
 } from '../pieces';
+import { buildPosition } from '../../position';
 
 describe('fromBoard', () => {
   it('returns a list of pieces from a board', () => {

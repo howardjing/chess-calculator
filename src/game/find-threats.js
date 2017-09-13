@@ -1,47 +1,26 @@
 // @flow
 import Chess from 'chess.js';
-
 import type { Color } from './chess';
+import { fromBoard } from './chess/pieces';
+import type { Piece } from './chess/pieces';
+import { toLabel } from './position';
+import type { Position } from './position';
 
-type Move = {
-  color: Color,
-  from: string,
-  to: string,
-};
+const incrementThreat = (player: Color, color: Color, current: number) =>
+  player === color ? current - 1 : current + 1;
 
-const fenAsPlayer = (fen: string, player: Color): string => {
-  // https://en.wikipedia.org/wiki/Forsyth%E2%80%93Edwards_Notation
-  // second part is the active color
-  const parts = fen.split(' ');
-  parts[1] = player;
-  return parts.join(' ');
-}
-
-const asPlayer = (chess: Chess, player: Color): Chess => {
-  return new Chess(fenAsPlayer(chess.fen(), player));
-}
-
-const asWhite = (chess: Chess): Chess => asPlayer(chess, 'w');
-const asBlack = (chess: Chess): Chess => asPlayer(chess, 'b');
-
-const moves = (chess: Chess): Move[] => {
-  const whiteMoves = asWhite(chess).moves({ verbose: true });
-  const blackMoves = asBlack(chess).moves({ verbose: true });
-  return whiteMoves.concat(blackMoves);
-};
-
-const _findThreats = (moves: Move[], player: Color): { [string]: number } => {
+const findThreats = (chess: Chess, player: Color = 'w'): { [string]: number } => {
+  const pieces = fromBoard(chess.board());
   const threats = {};
-
-  moves.forEach(({ color, to }) => {
-    const level = threats[to] || 0;
-    threats[to] = color === player ? level - 1 : level + 1;
+  pieces.forEach((piece: Piece) => {
+    piece.attacking().forEach((position: Position) => {
+      console.log("PIECE", piece, "attacking", toLabel(position));
+      const key = toLabel(position);
+      threats[key] = incrementThreat(player, piece.color, threats[key] || 0);
+    })
   });
 
   return threats;
 };
-
-const findThreats = (chess: Chess, player: Color = 'w'): { [string]: number } =>
-  _findThreats(moves(chess), player);
 
 export default findThreats;

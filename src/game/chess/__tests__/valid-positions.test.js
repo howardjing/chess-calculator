@@ -1,5 +1,6 @@
 // @flow
-import { buildPosition, validPositions } from '../pieces';
+import { validPositions } from '../pieces';
+import { buildPosition } from '../../position';
 
 describe('validPositions', () => {
   it('filters out invalid positions', () => {

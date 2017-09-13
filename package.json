@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "dependencies": {
-    "chess.js": "^0.10.2",
+    "chess.js": "https://github.com/jhlywa/chess.js#b2650a33d7cda5c3ca29b06556a45eb267b9db58",
     "flow-bin": "^0.54.0",
     "lodash": "^4.17.4",
     "react": "^15.6.1",

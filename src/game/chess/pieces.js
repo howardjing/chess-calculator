@@ -1,12 +1,8 @@
 // @flow
+import { flatMap } from 'lodash';
 import type { Color, PieceType } from './index';
-
-type Position = {
-  row: number,
-  col: number;
-};
-
-const buildPosition = (row: number, col: number): Position => ({ row, col });
+import { buildPosition } from '../position';
+import type { Position } from '../position';
 
 class Piece {
   color: Color;
@@ -153,6 +149,7 @@ const buildPiece = (type: PieceType, color: Color, position: Position): Piece =>
     case 'q': return new Queen(color, position);
     case 'r': return new Rook(color, position);
     default: throw new Error(`Unknown piece type ${type}`);
+    // eslint-disable-next-line no-unreachable
   };
 }
 
@@ -166,16 +163,13 @@ function filterNulls<T>(arr: Array<?T>): Array<T> {
   return result;
 }
 
-/**
- * board.flatMap((row, i) => row.map((piece, j) => new Piece(...)))
- */
 const fromBoard = (board: (?{ type: PieceType, color: Color })[][]): Piece[] =>
-  board.map((row, i) =>
+  flatMap(board, (row, i: number): Piece[] =>
     filterNulls(row.map((piece, j) => {
       if (!piece) { return null; }
       return buildPiece(piece.type, piece.color, buildPosition(i, j))
     }))
-  ).reduce((accum, row) => accum.concat(row), []);
+  );
 
 // const findThreats = (pieces, player): => {
 //   const positions = {};
@@ -186,8 +180,8 @@ const fromBoard = (board: (?{ type: PieceType, color: Color })[][]): Piece[] =>
 
 export {
   validPositions,
-  buildPosition,
   fromBoard,
+  Piece,
   King,
   Queen,
   Rook,

@@ -1,5 +1,6 @@
 [ignore]
 .*/styled-components/src/.*
+.*/http-parser-js/.*
 
 [include]
 

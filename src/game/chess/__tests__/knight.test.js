@@ -1,5 +1,6 @@
 // @flow
-import { Knight, buildPosition } from '../pieces';
+import { Knight } from '../pieces';
+import { buildPosition } from '../../position';
 
 describe('Knight', () => {
   describe('attacking', () => {

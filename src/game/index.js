@@ -1,18 +1,20 @@
 // @flow
 import React, { PureComponent } from 'react';
 import styled from 'styled-components';
+import { range } from 'lodash';
 import type Chess from 'chess.js';
 import Piece from './piece';
 import findThreats from './find-threats';
-
-const LETTERS = ['a', 'b' , 'c', 'd', 'e', 'f', 'g', 'h'];
-const NUMBERS = [8, 7, 6, 5, 4, 3, 2, 1];
+import { buildPosition, toLabel } from './position';
 
 type Props = {
   chess: Chess,
 };
 
-const position = (row: number, col: string): string => `${col}${row}`;
+const ROWS = range(0, 8);
+const COLS = range(0, 8);
+
+const position = (row: number, col: number): string => toLabel(buildPosition(row, col));
 
 class Game extends PureComponent<Props> {
   render() {
@@ -20,9 +22,9 @@ class Game extends PureComponent<Props> {
     const threats = findThreats(chess);
     return (
       <div>
-        {NUMBERS.map((row) =>
+        {ROWS.map((row) =>
           <Row key={row}>
-            {LETTERS.map((col) => {
+            {COLS.map((col) => {
               const pos = position(row, col);
               const piece = chess.get(pos);
               const threat = threats[pos] || 0;
