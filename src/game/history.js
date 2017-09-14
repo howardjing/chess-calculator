@@ -9,7 +9,7 @@ type Props = {
   onChangeIndex: (index: number) => any,
 };
 
-const isFirst = (index: number): boolean => index === 0;
+const isFirst = (index: number): boolean => index === -1;
 const isLast = <T>(history: T[], index: number) => index >= history.length;
 
 class History extends Component<Props> {

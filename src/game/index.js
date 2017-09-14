@@ -35,7 +35,7 @@ const buildGameFrom = (chess: Chess, index: number) => {
 class Game extends PureComponent<Props, State> {
   state = {
     game: new Chess(),
-    index: 0,
+    index: -1,
   };
 
   handleChangeIndex = (index: number) => {
