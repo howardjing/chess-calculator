@@ -2,8 +2,9 @@
 import React, { PureComponent } from 'react';
 import styled from 'styled-components';
 import { range } from 'lodash';
-import type Chess from 'chess.js';
+import Chess from 'chess.js';
 import Piece from './piece';
+import History from './history';
 import findThreats from './find-threats';
 import { buildPosition, toLabel } from './position';
 
@@ -11,39 +12,73 @@ type Props = {
   chess: Chess,
 };
 
+type State = {
+  game: Chess,
+  index: number,
+};
+
 const ROWS = range(0, 8);
 const COLS = range(0, 8);
 
 const position = (row: number, col: number): string => toLabel(buildPosition(row, col));
 
-class Game extends PureComponent<Props> {
-  render() {
+const buildGameFrom = (chess: Chess, index: number) => {
+  const moves = chess.history().slice(0, index + 1);
+  const game = new Chess();
+  moves.forEach(move => {
+    game.move(move);
+  });
+
+  return game;
+};
+
+class Game extends PureComponent<Props, State> {
+  state = {
+    game: new Chess(),
+    index: 0,
+  };
+
+  handleChangeIndex = (index: number) => {
     const { chess } = this.props;
-    const threats = findThreats(chess);
+    const game = buildGameFrom(chess, index);
+
+    this.setState(() => ({
+      index,
+      game,
+    }));
+  };
+
+  render() {
+    const { chess } = this.props; // completed game
+    const { game, index } = this.state;  // current point in the game
+    const threats = findThreats(game);
     return (
       <div>
-        {ROWS.map((row) =>
-          <Row key={row}>
-            {COLS.map((col) => {
-              const pos = position(row, col);
-              const piece = chess.get(pos);
-              const threat = threats[pos] || 0;
-              return (
-                <Square
-                  key={pos}
-                  style={{ backgroundColor: threatColor(threat) }}
-                >
-                  {piece ? <Piece
-                    piece={chess.get(pos)}
-                    width={'100%'}
-                    height={'100%'}
-                  /> : null}
-                  <Label>{threat}</Label>
-                </Square>
-              )
-          })}
-          </Row>
-        )}
+        <div>
+          {ROWS.map((row) =>
+            <Row key={row}>
+              {COLS.map((col) => {
+                const pos = position(row, col);
+                const piece = game.get(pos);
+                const threat = threats[pos] || 0;
+                return (
+                  <Square
+                    key={pos}
+                    style={{ backgroundColor: threatColor(threat) }}
+                  >
+                    {piece ? <Piece
+                      piece={game.get(pos)}
+                      width={'100%'}
+                      height={'100%'}
+                    /> : null}
+                    <Label>{threat}</Label>
+                  </Square>
+                )
+            })}
+            </Row>
+          )}
+        </div>
+        <History history={chess.history()} index={index} onChangeIndex={this.handleChangeIndex} />
       </div>
     );
   }
