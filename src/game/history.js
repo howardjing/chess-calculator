@@ -10,7 +10,7 @@ type Props = {
 };
 
 const isFirst = (index: number): boolean => index === -1;
-const isLast = <T>(history: T[], index: number) => index >= history.length;
+const isLast = <T>(history: T[], index: number) => index >= history.length - 1;
 
 class History extends Component<Props> {
 
