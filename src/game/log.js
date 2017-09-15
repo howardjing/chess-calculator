@@ -24,8 +24,7 @@ class Log extends Component<Props> {
     const aIndex = 2 * turn;
     const bIndex = aIndex + 1;
     return (
-      <div>
-        <span>{turn + 1}. </span>
+      <li>
         <Move
           active={isActive(index, aIndex)}
           onClick={() => onChangeIndex(aIndex)}
@@ -38,7 +37,7 @@ class Log extends Component<Props> {
         >
           {b || null}
         </Move>
-      </div>
+      </li>
     );
   }
 
@@ -57,11 +56,10 @@ class Log extends Component<Props> {
 const Wrapper = styled.div`
   position: relative;
   width: 150px;
-  padding: 0 20px;
   overflow-y: scroll;
 `;
 
-const Content = styled.div`
+const Content = styled.ol`
   position: absolute;
 `;
 
