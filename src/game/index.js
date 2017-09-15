@@ -4,7 +4,8 @@ import styled from 'styled-components';
 import { range } from 'lodash';
 import Chess from 'chess.js';
 import Piece from './piece';
-import History from './history';
+import Log from './log';
+import Controls from './controls';
 import findThreats from './find-threats';
 import { buildPosition, toLabel } from './position';
 
@@ -52,33 +53,37 @@ class Game extends PureComponent<Props, State> {
     const { chess } = this.props; // completed game
     const { game, index } = this.state;  // current point in the game
     const threats = findThreats(game);
+    const history = chess.history();
     return (
       <div>
-        <div>
-          {ROWS.map((row) =>
-            <Row key={row}>
-              {COLS.map((col) => {
-                const pos = position(row, col);
-                const piece = game.get(pos);
-                const threat = threats[pos] || 0;
-                return (
-                  <Square
-                    key={pos}
-                    style={{ backgroundColor: threatColor(threat) }}
-                  >
-                    {piece ? <Piece
-                      piece={game.get(pos)}
-                      width={'100%'}
-                      height={'100%'}
-                    /> : null}
-                    <Label>{threat}</Label>
-                  </Square>
-                )
-            })}
-            </Row>
-          )}
-        </div>
-        <History history={chess.history()} index={index} onChangeIndex={this.handleChangeIndex} />
+        <Board>
+          <div>
+            {ROWS.map((row) =>
+              <Row key={row}>
+                {COLS.map((col) => {
+                  const pos = position(row, col);
+                  const piece = game.get(pos);
+                  const threat = threats[pos] || 0;
+                  return (
+                    <Square
+                      key={pos}
+                      style={{ backgroundColor: threatColor(threat) }}
+                    >
+                      {piece ? <Piece
+                        piece={game.get(pos)}
+                        width={'100%'}
+                        height={'100%'}
+                      /> : null}
+                      <Label>{threat}</Label>
+                    </Square>
+                  )
+              })}
+              </Row>
+            )}
+          </div>
+          <Log history={history} index={index} onChangeIndex={this.handleChangeIndex} />
+        </Board>
+        <Controls history={history} index={index} onChangeIndex={this.handleChangeIndex} />
       </div>
     );
   }
@@ -107,6 +112,10 @@ const THREAT_COLORS = {
 
 const clamp = (n: number, min: number, max: number): number => Math.min(Math.max(n, min), max);
 const threatColor = (threat: number): string => THREAT_COLORS[clamp(threat, -5, 5)];
+
+const Board = styled.div`
+  display: flex;
+`;
 
 const Row = styled.div`
   display: flex;

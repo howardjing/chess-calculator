@@ -10,9 +10,9 @@ type Props = {
 };
 
 const isFirst = (index: number): boolean => index === -1;
-const isLast = <T>(history: T[], index: number) => index >= history.length - 1;
+const isLast = (history: any[], index: number) => index >= history.length - 1;
 
-class History extends Component<Props> {
+class Controls extends Component<Props> {
   componentDidMount() {
     document.addEventListener('keydown', this.handleKeyPress);
   }
@@ -54,39 +54,37 @@ class History extends Component<Props> {
   render() {
     const { history, index } = this.props;
     return (
-      <div>
-        <Controls>
-          <Control
-            active={!isFirst(index)}
-            onClick={this.goFirst}
-          >
-            first
-          </Control>
-          <Control
-            active={!isFirst(index)}
-            onClick={this.goBack}
-          >
-            &#xab; prev
-          </Control>
-          <Control
-            active={!isLast(history, index)}
-            onClick={this.goForward}
-          >
-            next &#xbb;
-          </Control>
-          <Control
-            active={!isLast(history, index)}
-            onClick={this.goLast}
-          >
-            last
-          </Control>
-        </Controls>
-      </div>
+      <Wrapper>
+        <Control
+          active={!isFirst(index)}
+          onClick={this.goFirst}
+        >
+          first
+        </Control>
+        <Control
+          active={!isFirst(index)}
+          onClick={this.goBack}
+        >
+          &#xab; prev
+        </Control>
+        <Control
+          active={!isLast(history, index)}
+          onClick={this.goForward}
+        >
+          next &#xbb;
+        </Control>
+        <Control
+          active={!isLast(history, index)}
+          onClick={this.goLast}
+        >
+          last
+        </Control>
+      </Wrapper>
     );
   }
 }
 
-const Controls = styled.div`
+const Wrapper = styled.div`
   display: flex;
   margin: 20px 0;
 `;
@@ -102,4 +100,4 @@ const Control = styled.div`
   pointer-events: ${({ active }: ControlProps) => active ? 'auto' : 'none'};
 `;
 
-export default History;
+export default Controls;
