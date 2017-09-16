@@ -1,6 +1,7 @@
 // @flow
 import React, { PureComponent } from 'react';
 import styled from 'styled-components';
+import { Motion, spring } from 'react-motion';
 import { range } from 'lodash';
 import Chess from 'chess.js';
 import Piece from './piece';
@@ -8,20 +9,32 @@ import Log from './log';
 import Controls from './controls';
 import findThreats from './find-threats';
 import { buildPosition, toLabel } from './position';
+import type { Color, PieceType } from './chess';
+
+type PiecePojo = {
+  color: Color,
+  type: PieceType,
+};
+
+type Threats = { [string]: number };
 
 type Props = {
   chess: Chess,
 };
 
 type State = {
-  game: Chess,
   index: number,
+  board: Chess,
+  threats: Threats,
+  prevThreats: Threats,
 };
 
 const ROWS = range(0, 8);
 const COLS = range(0, 8);
 
-const position = (row: number, col: number): string => toLabel(buildPosition(row, col));
+const SPRING_CONFIG = { stiffness: 600, damping: 40 };
+
+const getPosition = (row: number, col: number): string => toLabel(buildPosition(row, col));
 
 const buildGameFrom = (chess: Chess, index: number) => {
   const moves = chess.history().slice(0, index + 1);
@@ -33,26 +46,71 @@ const buildGameFrom = (chess: Chess, index: number) => {
   return game;
 };
 
+const getThreat = (threats: Threats, position: string): number => threats[position] || 0;
+
+const interpolateColor = (start: string, end: string, interpolation: number): string => {
+  if (interpolation <= 0) { return start; }
+  if (interpolation >= 1) { return end; }
+
+  return 'cornsilk';
+};
+
 class Game extends PureComponent<Props, State> {
   state = {
-    game: new Chess(),
     index: -1,
+    board: new Chess(),
+    threats: {},
+    prevThreats: {},
   };
 
-  handleChangeIndex = (index: number) => {
+  // TODO: duplication between this and handleChangeIndex,
+  // only real difference is prevThreats
+  componentWillMount() {
     const { chess } = this.props;
-    const game = buildGameFrom(chess, index);
+    const { index } = this.state;
+    const board = buildGameFrom(chess, index);
+    const threats = findThreats(board);
 
     this.setState(() => ({
       index,
-      game,
+      board,
+      threats,
+      prevThreats: threats,
+    }));
+  }
+
+  handleChangeIndex = (index: number) => {
+    const { chess } = this.props;
+    const { threats: prevThreats } = this.state;
+    const board = buildGameFrom(chess, index);
+    const threats = findThreats(board);
+
+    this.setState(() => ({
+      index,
+      board,
+      threats,
+      prevThreats,
     }));
   };
 
+  renderSquare = (pos: string, piece: PiecePojo, threat: number, prevThreat: number) => ({ x }: { x: number }) => {
+    return (
+      <Square
+        style={{ backgroundColor: interpolateColor(threatColor(prevThreat), threatColor(threat), x) }}
+      >
+        {piece ? <Piece
+          piece={piece}
+          width={'100%'}
+          height={'100%'}
+        /> : null}
+        <Label>{threat}</Label>
+      </Square>
+    );
+  }
+
   render() {
     const { chess } = this.props; // completed game
-    const { game, index } = this.state;  // current point in the game
-    const threats = findThreats(game);
+    const { board, threats, prevThreats, index } = this.state;  // current point in the game
     const history = chess.history();
     return (
       <div>
@@ -61,21 +119,17 @@ class Game extends PureComponent<Props, State> {
             {ROWS.map((row) =>
               <Row key={row}>
                 {COLS.map((col) => {
-                  const pos = position(row, col);
-                  const piece = game.get(pos);
-                  const threat = threats[pos] || 0;
+                  const pos = getPosition(row, col);
+                  const piece = board.get(pos);
+                  const threat = getThreat(threats, pos);
+                  const prevThreat = getThreat(prevThreats, pos);
                   return (
-                    <Square
+                    <Motion
                       key={pos}
-                      style={{ backgroundColor: threatColor(threat) }}
+                      style={{ x: spring(threat - prevThreat === 0 ? 0 : 1, SPRING_CONFIG) }}
                     >
-                      {piece ? <Piece
-                        piece={game.get(pos)}
-                        width={'100%'}
-                        height={'100%'}
-                      /> : null}
-                      <Label>{threat}</Label>
-                    </Square>
+                      {this.renderSquare(pos, piece, threat, prevThreat)}
+                    </Motion>
                   )
               })}
               </Row>

@@ -24,7 +24,7 @@ class Log extends Component<Props> {
     const aIndex = 2 * turn;
     const bIndex = aIndex + 1;
     return (
-      <li>
+      <li key={turn}>
         <Move
           active={isActive(index, aIndex)}
           onClick={() => onChangeIndex(aIndex)}
