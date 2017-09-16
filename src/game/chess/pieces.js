@@ -163,7 +163,7 @@ function filterNulls<T>(arr: Array<?T>): Array<T> {
   return result;
 }
 
-const fromBoard = (board: (?{ type: PieceType, color: Color })[][]): Piece[] =>
+const piecesFromBoard = (board: (?{ type: PieceType, color: Color })[][]): Piece[] =>
   flatMap(board, (row, i: number): Piece[] =>
     filterNulls(row.map((piece, j) => {
       if (!piece) { return null; }
@@ -173,7 +173,7 @@ const fromBoard = (board: (?{ type: PieceType, color: Color })[][]): Piece[] =>
 
 export {
   validPositions,
-  fromBoard,
+  piecesFromBoard,
   Piece,
   King,
   Queen,

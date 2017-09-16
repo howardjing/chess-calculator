@@ -1,11 +1,11 @@
 // @flow
 import {
-  fromBoard,
+  piecesFromBoard,
   King, Queen, Rook, Knight, Bishop, Pawn,
 } from '../pieces';
 import { buildPosition } from '../../position';
 
-describe('fromBoard', () => {
+describe('piecesFromBoard', () => {
   it('returns a list of pieces from a board', () => {
     const board = [
       [{ type: 'k', color: 'w' }, { type: 'q', color: 'b' }, { type: 'r', color: 'w'}],
@@ -13,7 +13,7 @@ describe('fromBoard', () => {
       [{ type: 'n', color: 'b' }, { type: 'b', color: 'w' }, { type: 'p', color: 'b'}],
     ];
 
-    expect(fromBoard(board).map(x => JSON.stringify(x))).toEqual([
+    expect(piecesFromBoard(board).map(x => JSON.stringify(x))).toEqual([
       new King('w', buildPosition(0, 0)),
       new Queen('b', buildPosition(0, 1)),
       new Rook('w', buildPosition(0, 2)),

@@ -9,6 +9,7 @@ import Piece from './piece';
 import Log from './log';
 import Controls from './controls';
 import findThreats from './find-threats';
+import { piecesFromBoard } from './chess/pieces';
 import { buildPosition, toLabel } from './position';
 import type { Color, PieceType } from './chess';
 
@@ -36,7 +37,7 @@ const SPRING_CONFIG = { stiffness: 300, damping: 40 };
 
 const getPosition = (row: number, col: number): string => toLabel(buildPosition(row, col));
 
-const buildGameFrom = (chess: Chess, index: number) => {
+const buildGameFrom = (chess: Chess, index: number): Chess => {
   const moves = chess.history().slice(0, index + 1);
   const game = new Chess();
   moves.forEach(move => {
@@ -45,6 +46,8 @@ const buildGameFrom = (chess: Chess, index: number) => {
 
   return game;
 };
+
+const getPieces = (game: Chess) => piecesFromBoard(game.board());
 
 const getThreat = (threats: Threats, position: string): number => threats[position] || 0;
 
@@ -60,7 +63,7 @@ class Game extends Component<Props, State> {
     const { chess } = this.props;
     const { index } = this.state;
     const board = buildGameFrom(chess, index);
-    const threats = findThreats(board);
+    const threats = findThreats(getPieces(board));
 
     this.setState(() => ({
       index,
@@ -72,7 +75,7 @@ class Game extends Component<Props, State> {
   handleChangeIndex = (index: number) => {
     const { chess } = this.props;
     const board = buildGameFrom(chess, index);
-    const threats = findThreats(board);
+    const threats = findThreats(getPieces(board));
 
     this.setState(() => ({
       index,
@@ -102,8 +105,8 @@ class Game extends Component<Props, State> {
     const history = chess.history();
     return (
       <div>
-        <Board>
-          <div>
+        <BoardWrapper>
+          <Board>
             {ROWS.map((row) =>
               <Row key={row}>
                 {COLS.map((col) => {
@@ -121,9 +124,9 @@ class Game extends Component<Props, State> {
               })}
               </Row>
             )}
-          </div>
+          </Board>
           <Log history={history} index={index} onChangeIndex={this.handleChangeIndex} />
-        </Board>
+        </BoardWrapper>
         <Bottom>
           <Controls history={history} index={index} onChangeIndex={this.handleChangeIndex} />
           <Row>
@@ -146,10 +149,10 @@ class Game extends Component<Props, State> {
 }
 
 // http://colorbrewer2.org/#type=sequential
-const WARNING_COLOR_START = '#feedde'; //  0
-const WARNING_COLOR_END = '#a63603';   //  5
-const SAFE_COLOR_START = '#edf8e9';    // -1
-const SAFE_COLOR_END =  '#006d2c';     // -5
+const WARNING_COLOR_START = '#feedde'; //  1
+const WARNING_COLOR_END   = '#a63603'; //  5
+const SAFE_COLOR_START    = '#edf8e9'; // -1
+const SAFE_COLOR_END      = '#006d2c'; // -5
 
 // interpolates two hex colors using hsluv
 const interpolate = (start: string, end: string, number: number): string => {
@@ -188,8 +191,12 @@ const threatColor = (threat: number): string => {
   return SAFE_COLOR_END;
 }
 
-const Board = styled.div`
+const BoardWrapper = styled.div`
   display: flex;
+`;
+
+const Board = styled.div`
+  position: relative;
 `;
 
 const Row = styled.div`
