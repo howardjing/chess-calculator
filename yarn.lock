@@ -3095,6 +3095,10 @@ hpack.js@^2.1.6:
     readable-stream "^2.0.1"
     wbuf "^1.1.0"
 
+hsluv@^0.0.1:
+  version "0.0.1"
+  resolved "https://registry.yarnpkg.com/hsluv/-/hsluv-0.0.1.tgz#1dbcfe4642ec207443b976de6c2af703b30cca5c"
+
 html-comment-regex@^1.1.0:
   version "1.1.1"
   resolved "https://registry.yarnpkg.com/html-comment-regex/-/html-comment-regex-1.1.1.tgz#668b93776eaae55ebde8f3ad464b307a4963625e"

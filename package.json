@@ -5,6 +5,7 @@
   "dependencies": {
     "chess.js": "https://github.com/jhlywa/chess.js#b2650a33d7cda5c3ca29b06556a45eb267b9db58",
     "flow-bin": "^0.54.0",
+    "hsluv": "^0.0.1",
     "lodash": "^4.17.4",
     "react": "^15.6.1",
     "react-dom": "^15.6.1",

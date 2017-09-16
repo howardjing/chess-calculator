@@ -86,7 +86,6 @@ class Controls extends Component<Props> {
 
 const Wrapper = styled.div`
   display: flex;
-  margin: 20px 0;
 `;
 
 type ControlProps = {

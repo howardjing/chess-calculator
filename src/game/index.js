@@ -1,9 +1,10 @@
 // @flow
-import React, { PureComponent } from 'react';
+import React, { Component } from 'react';
 import styled from 'styled-components';
 import { Motion, spring } from 'react-motion';
 import { range } from 'lodash';
 import Chess from 'chess.js';
+import { hsluvToHex, hexToHsluv } from 'hsluv';
 import Piece from './piece';
 import Log from './log';
 import Controls from './controls';
@@ -26,13 +27,12 @@ type State = {
   index: number,
   board: Chess,
   threats: Threats,
-  prevThreats: Threats,
 };
 
 const ROWS = range(0, 8);
 const COLS = range(0, 8);
 
-const SPRING_CONFIG = { stiffness: 600, damping: 40 };
+const SPRING_CONFIG = { stiffness: 300, damping: 40 };
 
 const getPosition = (row: number, col: number): string => toLabel(buildPosition(row, col));
 
@@ -48,23 +48,14 @@ const buildGameFrom = (chess: Chess, index: number) => {
 
 const getThreat = (threats: Threats, position: string): number => threats[position] || 0;
 
-const interpolateColor = (start: string, end: string, interpolation: number): string => {
-  if (interpolation <= 0) { return start; }
-  if (interpolation >= 1) { return end; }
-
-  return 'cornsilk';
-};
-
-class Game extends PureComponent<Props, State> {
+class Game extends Component<Props, State> {
   state = {
     index: -1,
     board: new Chess(),
     threats: {},
-    prevThreats: {},
   };
 
   // TODO: duplication between this and handleChangeIndex,
-  // only real difference is prevThreats
   componentWillMount() {
     const { chess } = this.props;
     const { index } = this.state;
@@ -75,13 +66,11 @@ class Game extends PureComponent<Props, State> {
       index,
       board,
       threats,
-      prevThreats: threats,
     }));
   }
 
   handleChangeIndex = (index: number) => {
     const { chess } = this.props;
-    const { threats: prevThreats } = this.state;
     const board = buildGameFrom(chess, index);
     const threats = findThreats(board);
 
@@ -89,28 +78,27 @@ class Game extends PureComponent<Props, State> {
       index,
       board,
       threats,
-      prevThreats,
     }));
   };
 
-  renderSquare = (pos: string, piece: PiecePojo, threat: number, prevThreat: number) => ({ x }: { x: number }) => {
+  renderSquare = (piece: PiecePojo) => ({ threat }: { threat: number }) => {
     return (
       <Square
-        style={{ backgroundColor: interpolateColor(threatColor(prevThreat), threatColor(threat), x) }}
+        style={{ backgroundColor: threatColor(threat) }}
       >
         {piece ? <Piece
           piece={piece}
           width={'100%'}
           height={'100%'}
         /> : null}
-        <Label>{threat}</Label>
+        <Label>{Math.round(threat)}</Label>
       </Square>
     );
   }
 
   render() {
     const { chess } = this.props; // completed game
-    const { board, threats, prevThreats, index } = this.state;  // current point in the game
+    const { board, threats, index } = this.state;  // current point in the game
     const history = chess.history();
     return (
       <div>
@@ -122,13 +110,12 @@ class Game extends PureComponent<Props, State> {
                   const pos = getPosition(row, col);
                   const piece = board.get(pos);
                   const threat = getThreat(threats, pos);
-                  const prevThreat = getThreat(prevThreats, pos);
                   return (
                     <Motion
                       key={pos}
-                      style={{ x: spring(threat - prevThreat === 0 ? 0 : 1, SPRING_CONFIG) }}
+                      style={{ threat: spring(threat, SPRING_CONFIG) }}
                     >
-                      {this.renderSquare(pos, piece, threat, prevThreat)}
+                      {this.renderSquare(piece)}
                     </Motion>
                   )
               })}
@@ -137,35 +124,69 @@ class Game extends PureComponent<Props, State> {
           </div>
           <Log history={history} index={index} onChangeIndex={this.handleChangeIndex} />
         </Board>
-        <Controls history={history} index={index} onChangeIndex={this.handleChangeIndex} />
+        <Bottom>
+          <Controls history={history} index={index} onChangeIndex={this.handleChangeIndex} />
+          <Row>
+            <Legend style={{ backgroundColor: threatColor(-5) }} />
+            <Legend style={{ backgroundColor: threatColor(-4) }} />
+            <Legend style={{ backgroundColor: threatColor(-3) }} />
+            <Legend style={{ backgroundColor: threatColor(-2) }} />
+            <Legend style={{ backgroundColor: threatColor(-1) }} />
+            <Legend style={{ backgroundColor: threatColor(0) }} />
+            <Legend style={{ backgroundColor: threatColor(1) }} />
+            <Legend style={{ backgroundColor: threatColor(2) }} />
+            <Legend style={{ backgroundColor: threatColor(3) }} />
+            <Legend style={{ backgroundColor: threatColor(4) }} />
+            <Legend style={{ backgroundColor: threatColor(5) }} />
+          </Row>
+        </Bottom>
       </div>
     );
   }
 }
 
-
 // http://colorbrewer2.org/#type=sequential
-const THREAT_COLORS = {
-  // orange gradient
-  '5':  '#a63603',
-  '4':  '#e6550d',
-  '3':  '#fd8d3c',
-  '2':  '#fdbe85',
-  '1':  '#feedde',
+const WARNING_COLOR_START = '#feedde'; //  0
+const WARNING_COLOR_END = '#a63603';   //  5
+const SAFE_COLOR_START = '#edf8e9';    // -1
+const SAFE_COLOR_END =  '#006d2c';     // -5
 
-  // neutral
-  '0':  '#ffffff',
+// interpolates two hex colors using hsluv
+const interpolate = (start: string, end: string, number: number): string => {
+  const xs: [number, number, number] = hexToHsluv(start);
+  const ys: [number, number, number] = hexToHsluv(end);
 
-  // green gradient
-  '-1': '#edf8e9',
-  '-2': '#bae4b3',
-  '-3': '#74c476',
-  '-4': '#31a354',
-  '-5': '#006d2c',
-};
+  const weightedAverage = ys.map((y: number, i: number) => {
+    const x = xs[i];
+    return (number * y) + ((1 - number) * x);
+  });
 
-const clamp = (n: number, min: number, max: number): number => Math.min(Math.max(n, min), max);
-const threatColor = (threat: number): string => THREAT_COLORS[clamp(threat, -5, 5)];
+  return hsluvToHex(weightedAverage);
+}
+
+const findWeight = (start: number, end: number, current: number) => (
+  (current - start) / (end - start)
+);
+
+const threatColor = (threat: number): string => {
+  if (threat > 5) {
+    return WARNING_COLOR_END
+  }
+
+  if (threat > 1) {
+    return interpolate(WARNING_COLOR_START, WARNING_COLOR_END, findWeight(1, 5, threat));
+  }
+
+  if (threat > -1) {
+    return interpolate(SAFE_COLOR_START, WARNING_COLOR_START, findWeight(-1, 1, threat));
+  }
+
+  if (threat > -5) {
+    return interpolate(SAFE_COLOR_START, SAFE_COLOR_END, findWeight(-1, -5, threat));
+  }
+
+  return SAFE_COLOR_END;
+}
 
 const Board = styled.div`
   display: flex;
@@ -175,10 +196,21 @@ const Row = styled.div`
   display: flex;
 `;
 
+const Bottom = styled.div`
+  display: flex;
+  justify-content: space-between;
+  margin: 20px 0;
+`;
+
 const Square = styled.div`
   width: 70px;
   height: 70px;
   position: relative;
+`;
+
+const Legend = styled.div`
+  width: 30px;
+  height: 30px;
 `;
 
 const Label = styled.div`
