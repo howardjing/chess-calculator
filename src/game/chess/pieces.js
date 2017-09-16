@@ -7,6 +7,7 @@ import type { Position } from '../position';
 class Piece {
   color: Color;
   position: Position;
+  type: PieceType;
 
   constructor(color: Color, position: Position) {
     this.color = color;
@@ -26,6 +27,8 @@ const isInBounds = (position: Position, n: number = 8): boolean => (
 const validPositions = (positions: Position[]): Position[] => positions.filter(pos => isInBounds(pos));
 
 class Pawn extends Piece {
+  type = 'p';
+
   attacking = (): Position[] => {
     const { row, col } = this.position;
     const newRow = this._advance(row);
@@ -39,6 +42,8 @@ class Pawn extends Piece {
 }
 
 class King extends Piece {
+  type = 'k';
+
   attacking = (): Position[] => {
     const { row, col } = this.position;
 
@@ -60,6 +65,8 @@ class King extends Piece {
 }
 
 class Knight extends Piece {
+  type = 'n';
+
   attacking = (): Position[] => {
     const { row, col } = this.position;
 
@@ -91,6 +98,8 @@ const attacks = (
 };
 
 class Bishop extends Piece {
+  type = 'b';
+
   attacking = (): Position[] => {
     const { position } = this;
     // northwest
@@ -105,6 +114,8 @@ class Bishop extends Piece {
 }
 
 class Rook extends Piece {
+  type = 'r';
+
   attacking = (): Position[] => {
     const { position } = this;
     // north
@@ -119,6 +130,8 @@ class Rook extends Piece {
 }
 
 class Queen extends Piece {
+  type = 'q';
+
   attacking = (): Position[] => {
     const { position } = this;
     // north

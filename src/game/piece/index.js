@@ -14,12 +14,10 @@ import WhiteBishop from './white-bishop';
 import WhiteKnight from './white-knight';
 import WhitePawn from './white-pawn';
 import type { Color, PieceType } from '../chess';
+import type { Piece as ChessPiece } from '../chess/pieces';
 
 type Props = {
-  piece: {
-    color: Color,
-    type: PieceType,
-  },
+  piece: ChessPiece,
   width: number | string,
   height: number | string,
 };

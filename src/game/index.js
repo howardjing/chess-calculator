@@ -1,5 +1,5 @@
 // @flow
-import React, { Component } from 'react';
+import React, { PureComponent } from 'react';
 import styled from 'styled-components';
 import { Motion, spring } from 'react-motion';
 import { range } from 'lodash';
@@ -9,14 +9,9 @@ import Piece from './piece';
 import Log from './log';
 import Controls from './controls';
 import findThreats from './find-threats';
-import { piecesFromBoard } from './chess/pieces';
+import { piecesFromBoard, Piece as ChessPiece } from './chess/pieces';
 import { buildPosition, toLabel } from './position';
-import type { Color, PieceType } from './chess';
-
-type PiecePojo = {
-  color: Color,
-  type: PieceType,
-};
+import type { Position } from './position';
 
 type Threats = { [string]: number };
 
@@ -26,16 +21,16 @@ type Props = {
 
 type State = {
   index: number,
-  board: Chess,
   threats: Threats,
+  pieces: ChessPiece[],
 };
 
 const ROWS = range(0, 8);
 const COLS = range(0, 8);
 
-const SPRING_CONFIG = { stiffness: 300, damping: 40 };
+const SPRING_CONFIG = { stiffness: 100, damping: 40 };
 
-const getPosition = (row: number, col: number): string => toLabel(buildPosition(row, col));
+const getPositionLabel = (row: number, col: number): string => toLabel(buildPosition(row, col));
 
 const buildGameFrom = (chess: Chess, index: number): Chess => {
   const moves = chess.history().slice(0, index + 1);
@@ -47,14 +42,26 @@ const buildGameFrom = (chess: Chess, index: number): Chess => {
   return game;
 };
 
-const getPieces = (game: Chess) => piecesFromBoard(game.board());
+const getPieces = (game: Chess): ChessPiece[] => piecesFromBoard(game.board());
 
 const getThreat = (threats: Threats, position: string): number => threats[position] || 0;
 
-class Game extends Component<Props, State> {
+const INITIAL_CHESS = new Chess();
+const INITIAL_PIECES = getPieces(INITIAL_CHESS);
+const SQUARE_SIZE = 70;
+const PIECE_SIZE = 70;
+
+const positionToCoords = (position: Position): { x: number, y: number } => {
+  const x = SQUARE_SIZE * position.row;
+  const y = SQUARE_SIZE * position.col;
+
+  return { x, y };
+};
+
+class Game extends PureComponent<Props, State> {
   state = {
     index: -1,
-    board: new Chess(),
+    pieces: INITIAL_PIECES,
     threats: {},
   };
 
@@ -63,37 +70,34 @@ class Game extends Component<Props, State> {
     const { chess } = this.props;
     const { index } = this.state;
     const board = buildGameFrom(chess, index);
-    const threats = findThreats(getPieces(board));
+    const pieces = getPieces(board);
+    const threats = findThreats(pieces);
 
     this.setState(() => ({
       index,
-      board,
       threats,
+      pieces,
     }));
   }
 
   handleChangeIndex = (index: number) => {
     const { chess } = this.props;
     const board = buildGameFrom(chess, index);
-    const threats = findThreats(getPieces(board));
+    const pieces = getPieces(board);
+    const threats = findThreats(pieces);
 
     this.setState(() => ({
       index,
-      board,
       threats,
+      pieces,
     }));
   };
 
-  renderSquare = (piece: PiecePojo) => ({ threat }: { threat: number }) => {
+  renderSquare = ({ threat }: { threat: number }) => {
     return (
       <Square
         style={{ backgroundColor: threatColor(threat) }}
       >
-        {piece ? <Piece
-          piece={piece}
-          width={'100%'}
-          height={'100%'}
-        /> : null}
         <Label>{Math.round(threat)}</Label>
       </Square>
     );
@@ -101,29 +105,54 @@ class Game extends Component<Props, State> {
 
   render() {
     const { chess } = this.props; // completed game
-    const { board, threats, index } = this.state;  // current point in the game
+    const { pieces, threats, index } = this.state;  // current point in the game
     const history = chess.history();
     return (
       <div>
         <BoardWrapper>
           <Board>
-            {ROWS.map((row) =>
+            {ROWS.map(row =>
               <Row key={row}>
-                {COLS.map((col) => {
-                  const pos = getPosition(row, col);
-                  const piece = board.get(pos);
+                {COLS.map(col => {
+                  const pos = getPositionLabel(row, col);
                   const threat = getThreat(threats, pos);
                   return (
                     <Motion
                       key={pos}
                       style={{ threat: spring(threat, SPRING_CONFIG) }}
                     >
-                      {this.renderSquare(piece)}
+                      {this.renderSquare}
                     </Motion>
                   )
               })}
               </Row>
             )}
+            {pieces.map((piece, i) => {
+              const coords = positionToCoords(piece.position);
+              return (
+                <Motion
+                  key={i}
+                  style={{
+                    x: spring(coords.x, SPRING_CONFIG),
+                    y: spring(coords.y, SPRING_CONFIG),
+                  }}
+                >
+                  {({ x, y }) => (
+                    <div style={{
+                      position: 'absolute',
+                      top: `${x}px`,
+                      left: `${y}px`,
+                    }}>
+                      <Piece
+                        width={PIECE_SIZE}
+                        height={PIECE_SIZE}
+                        piece={piece}
+                      />
+                    </div>
+                  )}
+                </Motion>
+              )
+            })}
           </Board>
           <Log history={history} index={index} onChangeIndex={this.handleChangeIndex} />
         </BoardWrapper>
@@ -210,8 +239,8 @@ const Bottom = styled.div`
 `;
 
 const Square = styled.div`
-  width: 70px;
-  height: 70px;
+  width: ${SQUARE_SIZE}px;
+  height: ${SQUARE_SIZE}px;
   position: relative;
 `;
 

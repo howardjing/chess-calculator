@@ -1,7 +1,5 @@
 // @flow
-import Chess from 'chess.js';
 import type { Color } from './chess';
-import { piecesFromBoard } from './chess/pieces';
 import type { Piece } from './chess/pieces';
 import { toLabel } from './position';
 import type { Position } from './position';
