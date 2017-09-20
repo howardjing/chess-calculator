@@ -137,9 +137,7 @@ class Game extends Component<Props, State> {
   };
 
   // TODO: duplication between this and handleChangeIndex,
-  componentWillMount() {
-    const { chess } = this.props;
-    const { index } = this.state;
+  handleNewGame = (chess: Chess, index: number) => {
     const board = buildGameFrom(chess, index);
     const pieces = getPieces(board);
     const threats = findThreats(piecesAsList(pieces));
@@ -151,9 +149,19 @@ class Game extends Component<Props, State> {
 
       // keys below vary as index changes
       index,
-      threats,
       pieces,
+      threats,
     }));
+  };
+
+  componentWillMount() {
+    const { chess } = this.props;
+    const { index } = this.state;
+    this.handleNewGame(chess, index);
+  }
+
+  componentWillReceiveProps({ chess }: Props) {
+    this.handleNewGame(chess, -1);
   }
 
   handleChangeIndex = (nextIndex: number) => {

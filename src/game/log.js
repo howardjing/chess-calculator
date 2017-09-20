@@ -60,7 +60,6 @@ class Log extends Component<Props> {
 
   render() {
     const { history } = this.props;
-    console.log("OH HIST", history)
     return (
       <Wrapper>
         <Content>
