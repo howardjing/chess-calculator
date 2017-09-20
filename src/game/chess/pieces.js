@@ -1,15 +1,19 @@
 // @flow
-import { flatMap } from 'lodash';
 import type { Color, PieceType } from './index';
-import { buildPosition } from '../position';
+import { buildPosition, toLabel } from '../position';
 import type { Position } from '../position';
 
+let NEXT_ID = 0;
+const nextId = (): number => ++NEXT_ID;
+
 class Piece {
+  id: number;
   color: Color;
   position: Position;
   type: PieceType;
 
   constructor(color: Color, position: Position) {
+    this.id = nextId();
     this.color = color;
     this.position = position;
   }
@@ -166,26 +170,24 @@ const buildPiece = (type: PieceType, color: Color, position: Position): Piece =>
   };
 }
 
-function filterNulls<T>(arr: Array<?T>): Array<T> {
-  const result = [];
-  for (var i = 0; i < arr.length; i++) {
-    if (arr[i] != null) {
-      result.push(arr[i]);
-    }
-  }
-  return result;
-}
+const piecesFromBoard = (board: (?{ type: PieceType, color: Color })[][]): { [string]: ?Piece } => {
+  const pieces = {};
+  board.forEach((row, i: number) => {
+    row.forEach((piece, j: number) => {
+      if (!piece) { return; }
+      const position = buildPosition(i, j);
+      const label = toLabel(position);
 
-const piecesFromBoard = (board: (?{ type: PieceType, color: Color })[][]): Piece[] =>
-  flatMap(board, (row, i: number): Piece[] =>
-    filterNulls(row.map((piece, j) => {
-      if (!piece) { return null; }
-      return buildPiece(piece.type, piece.color, buildPosition(i, j))
-    }))
-  );
+      pieces[label] = buildPiece(piece.type, piece.color, position);
+    })
+  });
+
+  return pieces;
+}
 
 export {
   validPositions,
+  buildPiece,
   piecesFromBoard,
   Piece,
   King,

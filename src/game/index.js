@@ -1,19 +1,36 @@
 // @flow
-import React, { PureComponent } from 'react';
+import React, { Component } from 'react';
 import styled from 'styled-components';
 import { Motion, spring } from 'react-motion';
 import { range } from 'lodash';
 import Chess from 'chess.js';
 import { hsluvToHex, hexToHsluv } from 'hsluv';
+import { flatMap } from 'lodash';
 import Piece from './piece';
 import Log from './log';
 import Controls from './controls';
 import findThreats from './find-threats';
-import { piecesFromBoard, Piece as ChessPiece } from './chess/pieces';
-import { buildPosition, toLabel } from './position';
+import { piecesFromBoard, buildPiece, Piece as ChessPiece } from './chess/pieces';
+import { buildPosition, toLabel, positionFromLabel } from './position';
 import type { Position } from './position';
+import type { PieceType as ChessPieceType, Color } from './chess';
 
-type Threats = { [string]: number };
+// standard algebraic notation
+type San = string;
+
+type PositionLabel = string;
+
+type Threats = { [PositionLabel]: number };
+
+// https://github.com/jhlywa/chess.js/blob/master/README.md#history-options
+type Move = {
+  from: PositionLabel,
+  to: PositionLabel,
+  san: San,
+  piece: ChessPieceType,
+  captured?: ChessPieceType,
+  color: Color,
+};
 
 type Props = {
   chess: Chess,
@@ -22,15 +39,17 @@ type Props = {
 type State = {
   index: number,
   threats: Threats,
-  pieces: ChessPiece[],
+  history: Move[],
+  pieces: { [PositionLabel]: ?ChessPiece },
 };
 
 const ROWS = range(0, 8);
 const COLS = range(0, 8);
 
-const SPRING_CONFIG = { stiffness: 100, damping: 40 };
+const COLOR_SPRING_CONFIG = { stiffness: 200, damping: 40 };
+const PIECE_SPRING_CONFIG = { stiffness: 400, damping: 40 };
 
-const getPositionLabel = (row: number, col: number): string => toLabel(buildPosition(row, col));
+const getPositionLabel = (row: number, col: number): PositionLabel => toLabel(buildPosition(row, col));
 
 const buildGameFrom = (chess: Chess, index: number): Chess => {
   const moves = chess.history().slice(0, index + 1);
@@ -42,9 +61,60 @@ const buildGameFrom = (chess: Chess, index: number): Chess => {
   return game;
 };
 
-const getPieces = (game: Chess): ChessPiece[] => piecesFromBoard(game.board());
+const getPieces = (game: Chess): { [PositionLabel]: ?ChessPiece } => piecesFromBoard(game.board());
 
-const getThreat = (threats: Threats, position: string): number => threats[position] || 0;
+// casting to any is a hack, Object.values(...) returns Array<mixed>
+// see https://github.com/facebook/flow/issues/2221
+const piecesAsList = (pieces: { [PositionLabel]: ?ChessPiece }): ChessPiece[] => (Object.values(pieces).filter(p => !!p): any);
+
+const getThreat = (threats: Threats, position: PositionLabel): number => threats[position] || 0;
+
+const handleCastling = (moves: Move[]): Move[] =>
+  flatMap(moves, (move: Move): Move[] => {
+    // king side castle
+    if (move.san === 'O-O') {
+      if (move.color === 'w') {
+        return [
+          { from: 'e1', to: 'g1', san: 'Kg1', piece: 'k', color: 'w' },
+          { from: 'h1', to: 'f1', san: 'Rf1', piece: 'r', color: 'w' },
+        ];
+      } else {
+        return [
+          { from: 'e8', to: 'g8', san: 'Kg8', piece: 'k', color: 'b' },
+          { from: 'h8', to: 'f8', san: 'Rf8', piece: 'r', color: 'b' },
+        ]
+      }
+    }
+
+    // queen side castle
+    if (move.san === 'O-O-O') {
+      if (move.color === 'w') {
+        return [
+          { from: 'e1', to: 'c1', san: 'Kc1', piece: 'k', color: 'w' },
+          { from: 'h1', to: 'd1', san: 'Rd1', piece: 'r', color: 'w' },
+        ];
+      } else {
+        return [
+          { from: 'e8', to: 'c8', san: 'Kc8', piece: 'k', color: 'b' },
+          { from: 'h8', to: 'd8', san: 'Rd8', piece: 'r', color: 'b' },
+        ]
+      }
+    }
+
+    // normal move
+    return [move];
+  });
+
+
+// TODO: i think there's an off by one error
+const findRelevantMoves = (history: Move[], from: number, to: number): Move[] => {
+  if (from === to) { return []; }
+  if (from < to) {
+    return handleCastling(history.slice(from + 1, to + 1));
+  } else {
+    return handleCastling(history.slice(to + 1, from + 1).reverse());
+  }
+};
 
 const INITIAL_CHESS = new Chess();
 const INITIAL_PIECES = getPieces(INITIAL_CHESS);
@@ -58,8 +128,9 @@ const positionToCoords = (position: Position): { x: number, y: number } => {
   return { x, y };
 };
 
-class Game extends PureComponent<Props, State> {
+class Game extends Component<Props, State> {
   state = {
+    history: [],
     index: -1,
     pieces: INITIAL_PIECES,
     threats: {},
@@ -71,27 +142,63 @@ class Game extends PureComponent<Props, State> {
     const { index } = this.state;
     const board = buildGameFrom(chess, index);
     const pieces = getPieces(board);
-    const threats = findThreats(pieces);
+    const threats = findThreats(piecesAsList(pieces));
+    const history = chess.history({ verbose: true });
 
     this.setState(() => ({
+      // same as long as chess is the same
+      history,
+
+      // keys below vary as index changes
       index,
       threats,
       pieces,
     }));
   }
 
-  handleChangeIndex = (index: number) => {
-    const { chess } = this.props;
-    const board = buildGameFrom(chess, index);
-    const pieces = getPieces(board);
-    const threats = findThreats(pieces);
+  handleChangeIndex = (nextIndex: number) => {
+    const { history, pieces, index: prevIndex } = this.state;
+    const goingForwards = prevIndex < nextIndex;
+    const moves: Move[] = findRelevantMoves(history, prevIndex, nextIndex);
+
+    // mutating state :(
+    // this method is rough can probably refactor
+    moves.forEach(move => {
+      if (goingForwards) {
+        const piece = pieces[move.from];
+
+        if (piece) {
+          piece.position = positionFromLabel(move.to);
+        }
+
+        pieces[move.from] = null;
+        pieces[move.to] = piece;
+      } else {
+        // going backwards, gotta restore stuff
+        const piece = pieces[move.to];
+        if (piece) {
+          piece.position = positionFromLabel(move.from);
+        }
+
+        const captured = move.captured ? buildPiece(
+          move.captured,
+          move.color === 'w' ? 'b' : 'w',
+          positionFromLabel(move.to),
+        ) : null;
+
+        pieces[move.to] = captured;
+        pieces[move.from] = piece;
+      }
+    });
+
+    const threats = findThreats(piecesAsList(pieces))
 
     this.setState(() => ({
-      index,
+      index: nextIndex,
       threats,
       pieces,
     }));
-  };
+  }
 
   renderSquare = ({ threat }: { threat: number }) => {
     return (
@@ -104,9 +211,9 @@ class Game extends PureComponent<Props, State> {
   }
 
   render() {
-    const { chess } = this.props; // completed game
-    const { pieces, threats, index } = this.state;  // current point in the game
-    const history = chess.history();
+    const { pieces, threats, index, history } = this.state;  // current point in the game
+    const piecesList = piecesAsList(pieces);
+
     return (
       <div>
         <BoardWrapper>
@@ -119,7 +226,7 @@ class Game extends PureComponent<Props, State> {
                   return (
                     <Motion
                       key={pos}
-                      style={{ threat: spring(threat, SPRING_CONFIG) }}
+                      style={{ threat: spring(threat, COLOR_SPRING_CONFIG) }}
                     >
                       {this.renderSquare}
                     </Motion>
@@ -127,14 +234,14 @@ class Game extends PureComponent<Props, State> {
               })}
               </Row>
             )}
-            {pieces.map((piece, i) => {
+            {piecesList.map(piece => {
               const coords = positionToCoords(piece.position);
               return (
                 <Motion
-                  key={i}
+                  key={piece.id}
                   style={{
-                    x: spring(coords.x, SPRING_CONFIG),
-                    y: spring(coords.y, SPRING_CONFIG),
+                    x: spring(coords.x, PIECE_SPRING_CONFIG),
+                    y: spring(coords.y, PIECE_SPRING_CONFIG),
                   }}
                 >
                   {({ x, y }) => (
@@ -256,3 +363,6 @@ const Label = styled.div`
 `;
 
 export default Game;
+export type {
+  Move ,
+};

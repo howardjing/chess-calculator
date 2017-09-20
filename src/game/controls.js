@@ -2,9 +2,10 @@
 
 import React, { Component } from 'react';
 import styled from 'styled-components';
+import type { Move } from './index';
 
 type Props = {
-  history: string[],
+  history: Move[],
   index: number,
   onChangeIndex: (index: number) => any,
 };

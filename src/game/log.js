@@ -2,17 +2,18 @@
 import React, { Component } from 'react';
 import { zip } from 'lodash';
 import styled from 'styled-components';
+import type { Move } from './index';
 
 type Props = {
-  history: string[],
+  history: Move[],
   index: number,
   onChangeIndex: (index: number) => any,
 };
 
-const byTurns = (history: string[]): [string, string][] => {
+const byTurns = (history: Move[]): [string, string][] => {
   const pivot = Math.ceil(history.length / 2);
-  const first = history.slice(0, pivot);
-  const last = history.slice(pivot, history.length);
+  const first = history.slice(0, pivot).map(h => h.san);
+  const last = history.slice(pivot, history.length).map(h => h.san);
   return zip(first, last);
 };
 
@@ -25,18 +26,18 @@ class Log extends Component<Props> {
     const bIndex = aIndex + 1;
     return (
       <li key={turn}>
-        <Move
+        <MoveComponent
           active={isActive(index, aIndex)}
           onClick={() => onChangeIndex(aIndex)}
         >
           {a || null}
-        </Move>
-        <Move
+        </MoveComponent>
+        <MoveComponent
           active={isActive(index, bIndex)}
           onClick={() => onChangeIndex(bIndex)}
         >
           {b || null}
-        </Move>
+        </MoveComponent>
       </li>
     );
   }
@@ -67,7 +68,7 @@ type MoveProps = {
   active: boolean,
 };
 
-const Move = styled.span`
+const MoveComponent = styled.span`
   cursor: pointer;
   font-size: 18px;
   font-weight: ${({ active }: MoveProps) => active ? 'bold': 'normal'};
@@ -75,4 +76,5 @@ const Move = styled.span`
     content: ' ';
   }
 `;
+
 export default Log;
