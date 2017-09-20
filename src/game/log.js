@@ -1,6 +1,5 @@
 // @flow
 import React, { Component } from 'react';
-import { zip } from 'lodash';
 import styled from 'styled-components';
 import type { Move } from './index';
 
@@ -11,10 +10,27 @@ type Props = {
 };
 
 const byTurns = (history: Move[]): [string, string][] => {
-  const pivot = Math.ceil(history.length / 2);
-  const first = history.slice(0, pivot).map(h => h.san);
-  const last = history.slice(pivot, history.length).map(h => h.san);
-  return zip(first, last);
+  const turns = [];
+  let newTurn = true;
+  let first = null;
+  let second = null;
+  history.forEach((move: Move) => {
+    if (newTurn) {
+      first = move;
+      newTurn = false;
+    } else {
+      second = move;
+      newTurn = true;
+
+      if (!first || !second) {
+        throw new Error("we done goofed");
+      }
+
+      turns.push([first.san, second.san]);
+    }
+  });
+
+  return turns;
 };
 
 const isActive = (x: number, y: number) => x === y;
@@ -44,6 +60,7 @@ class Log extends Component<Props> {
 
   render() {
     const { history } = this.props;
+    console.log("OH HIST", history)
     return (
       <Wrapper>
         <Content>
