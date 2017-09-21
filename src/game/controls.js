@@ -95,6 +95,8 @@ type ControlProps = {
 
 const Control = styled.div`
   margin-right: 10px;
+  font-size: 20px;
+  user-select: none;
   cursor: ${({ active }: ControlProps) => active ? 'pointer' : 'auto'};
   color: ${({ active }: ControlProps) => active ? '#000' : '#aaa'};
   pointer-events: ${({ active }: ControlProps) => active ? 'auto' : 'none'};

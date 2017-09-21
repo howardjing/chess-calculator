@@ -105,8 +105,6 @@ const handleCastling = (moves: Move[]): Move[] =>
     return [move];
   });
 
-
-// TODO: i think there's an off by one error
 const findRelevantMoves = (history: Move[], from: number, to: number): Move[] => {
   if (from === to) { return []; }
   if (from < to) {
@@ -118,8 +116,10 @@ const findRelevantMoves = (history: Move[], from: number, to: number): Move[] =>
 
 const INITIAL_CHESS = new Chess();
 const INITIAL_PIECES = getPieces(INITIAL_CHESS);
-const SQUARE_SIZE = 70;
-const PIECE_SIZE = 70;
+const SQUARE_SIZE = 8;
+const PIECE_SIZE = 7;
+const OFFSET = (SQUARE_SIZE - PIECE_SIZE) / 2;
+const UNITS = 'vh';
 
 const positionToCoords = (position: Position): { x: number, y: number } => {
   const x = SQUARE_SIZE * position.row;
@@ -255,12 +255,12 @@ class Game extends Component<Props, State> {
                   {({ x, y }) => (
                     <div style={{
                       position: 'absolute',
-                      top: `${x}px`,
-                      left: `${y}px`,
+                      top: `${x + OFFSET}${UNITS}`,
+                      left: `${y + OFFSET}${UNITS}`,
                     }}>
                       <Piece
-                        width={PIECE_SIZE}
-                        height={PIECE_SIZE}
+                        width={`${PIECE_SIZE}${UNITS}`}
+                        height={`${PIECE_SIZE}${UNITS}`}
                         piece={piece}
                       />
                     </div>
@@ -354,8 +354,8 @@ const Bottom = styled.div`
 `;
 
 const Square = styled.div`
-  width: ${SQUARE_SIZE}px;
-  height: ${SQUARE_SIZE}px;
+  width: ${SQUARE_SIZE}${UNITS};
+  height: ${SQUARE_SIZE}${UNITS};
   position: relative;
 `;
 
