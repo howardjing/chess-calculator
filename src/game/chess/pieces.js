@@ -6,19 +6,36 @@ import type { Position } from '../position';
 let NEXT_ID = 0;
 const nextId = (): number => ++NEXT_ID;
 
+type Direction = 'forwards' | 'backwards';
+
 class Piece {
   id: number;
   color: Color;
   position: Position;
   type: PieceType;
+  timesMoved: number;
 
   constructor(color: Color, position: Position) {
     this.id = nextId();
     this.color = color;
     this.position = position;
+    this.timesMoved = 0;
   }
 
   attacking = (): Position[] => [];
+  move = (position: Position, direction: Direction): void => {
+    this.position = position;
+    if (direction === 'forwards') {
+      this.timesMoved += 1;
+    } else {
+      // BUG / HACK: this check shouldn't be necessary -- right now
+      // it's here because when we capture a piece, the piece is deleted
+      // entirely, so restoring a captured piece and moving backwards will
+      // lead to negative numbers
+      if (this.timesMoved <= 0) { return; }
+      this.timesMoved -= 1;
+    }
+  }
 }
 
 const isInBounds = (position: Position, n: number = 8): boolean => (

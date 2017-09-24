@@ -176,7 +176,7 @@ class Game extends Component<Props, State> {
         const piece = pieces[move.from];
 
         if (piece) {
-          piece.position = positionFromLabel(move.to);
+          piece.move(positionFromLabel(move.to), 'forwards');
         }
 
         pieces[move.from] = null;
@@ -185,7 +185,7 @@ class Game extends Component<Props, State> {
         // going backwards, gotta restore stuff
         const piece = pieces[move.to];
         if (piece) {
-          piece.position = positionFromLabel(move.from);
+          piece.move(positionFromLabel(move.from), 'backwards');
         }
 
         const captured = move.captured ? buildPiece(
@@ -209,11 +209,13 @@ class Game extends Component<Props, State> {
   }
 
   renderSquare = ({ threat }: { threat: number }) => {
+    const color = threatColor(threat);
+    const labelColor = darken(color, 0.4)
     return (
       <Square
         style={{ backgroundColor: threatColor(threat) }}
       >
-        <Label>{Math.round(threat)}</Label>
+        <Label style={{ color: labelColor}}>{Math.round(threat)}</Label>
       </Square>
     );
   }
@@ -258,11 +260,14 @@ class Game extends Component<Props, State> {
                       top: `${x + OFFSET}${UNITS}`,
                       left: `${y + OFFSET}${UNITS}`,
                     }}>
-                      <Piece
-                        width={`${PIECE_SIZE}${UNITS}`}
-                        height={`${PIECE_SIZE}${UNITS}`}
-                        piece={piece}
-                      />
+                      <PieceWrapper>
+                        <Piece
+                          width={`${PIECE_SIZE}${UNITS}`}
+                          height={`${PIECE_SIZE}${UNITS}`}
+                          piece={piece}
+                        />
+                        {piece.timesMoved > 0 ? <PieceMoveCounter>{piece.timesMoved}</PieceMoveCounter> : null}
+                      </PieceWrapper>
                     </div>
                   )}
                 </Motion>
@@ -298,6 +303,11 @@ const WARNING_COLOR_END   = '#a63603'; //  5
 const SAFE_COLOR_START    = '#edf8e9'; // -1
 const SAFE_COLOR_END      = '#006d2c'; // -5
 
+const darken = (color: string, amount: number) => {
+  const [hue, saturation, luminosity] = hexToHsluv(color);
+  return hsluvToHex([hue, saturation, luminosity - (amount * 100)]);
+};
+
 // interpolates two hex colors using hsluv
 const interpolate = (start: string, end: string, number: number): string => {
   const xs: [number, number, number] = hexToHsluv(start);
@@ -309,7 +319,7 @@ const interpolate = (start: string, end: string, number: number): string => {
   });
 
   return hsluvToHex(weightedAverage);
-}
+};
 
 const findWeight = (start: number, end: number, current: number) => (
   (current - start) / (end - start)
@@ -368,6 +378,16 @@ const Label = styled.div`
   position: absolute;
   top: 0;
   right: 0;
+`;
+
+const PieceWrapper = styled.div`
+  position: relative;
+`;
+
+const PieceMoveCounter = styled.div`
+  position: absolute;
+  bottom: 0;
+  left: 0;
 `;
 
 export default Game;
