@@ -10,7 +10,7 @@ import Piece from './piece';
 import Log from './log';
 import Controls from './controls';
 import findThreats from './find-threats';
-import { piecesFromBoard, buildPiece, Piece as ChessPiece } from './chess/pieces';
+import { piecesFromBoard, Piece as ChessPiece } from './chess/pieces';
 import { buildPosition, toLabel, positionFromLabel } from './position';
 import type { Position } from './position';
 import type { PieceType as ChessPieceType, Color } from './chess';
@@ -41,6 +41,9 @@ type State = {
   threats: Threats,
   history: Move[],
   pieces: { [PositionLabel]: ?ChessPiece },
+
+  // stack for keeping track of captured pieces
+  captured: ChessPiece[],
 };
 
 const ROWS = range(0, 8);
@@ -134,6 +137,7 @@ class Game extends Component<Props, State> {
     index: -1,
     pieces: INITIAL_PIECES,
     threats: {},
+    captured: [],
   };
 
   // TODO: duplication between this and handleChangeIndex,
@@ -142,6 +146,7 @@ class Game extends Component<Props, State> {
     const pieces = getPieces(board);
     const threats = findThreats(piecesAsList(pieces));
     const history = chess.history({ verbose: true });
+    const captured = [];
 
     this.setState(() => ({
       // same as long as chess is the same
@@ -151,6 +156,7 @@ class Game extends Component<Props, State> {
       index,
       pieces,
       threats,
+      captured,
     }));
   };
 
@@ -165,7 +171,7 @@ class Game extends Component<Props, State> {
   }
 
   handleChangeIndex = (nextIndex: number) => {
-    const { history, pieces, index: prevIndex } = this.state;
+    const { history, pieces, index: prevIndex, captured } = this.state;
     const goingForwards = prevIndex < nextIndex;
     const moves: Move[] = findRelevantMoves(history, prevIndex, nextIndex);
 
@@ -174,9 +180,14 @@ class Game extends Component<Props, State> {
     moves.forEach(move => {
       if (goingForwards) {
         const piece = pieces[move.from];
+        const capturedPiece = pieces[move.to];
 
         if (piece) {
           piece.move(positionFromLabel(move.to), 'forwards');
+        }
+
+        if (capturedPiece) {
+          captured.push(capturedPiece);
         }
 
         pieces[move.from] = null;
@@ -184,17 +195,16 @@ class Game extends Component<Props, State> {
       } else {
         // going backwards, gotta restore stuff
         const piece = pieces[move.to];
+
         if (piece) {
           piece.move(positionFromLabel(move.from), 'backwards');
         }
 
-        const captured = move.captured ? buildPiece(
-          move.captured,
-          move.color === 'w' ? 'b' : 'w',
-          positionFromLabel(move.to),
-        ) : null;
+        // restore captured piece.
+        // TODO: maybe throw an exception if we pop an empty stack?
+        const capturedPiece = move.captured ? captured.pop() : null;
 
-        pieces[move.to] = captured;
+        pieces[move.to] = capturedPiece;
         pieces[move.from] = piece;
       }
     });
@@ -205,6 +215,7 @@ class Game extends Component<Props, State> {
       index: nextIndex,
       threats,
       pieces,
+      captured,
     }));
   }
 

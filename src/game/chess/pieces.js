@@ -28,11 +28,6 @@ class Piece {
     if (direction === 'forwards') {
       this.timesMoved += 1;
     } else {
-      // BUG / HACK: this check shouldn't be necessary -- right now
-      // it's here because when we capture a piece, the piece is deleted
-      // entirely, so restoring a captured piece and moving backwards will
-      // lead to negative numbers
-      if (this.timesMoved <= 0) { return; }
       this.timesMoved -= 1;
     }
   }
