@@ -12,9 +12,11 @@ const BlackKnight = ({
   height,
 }: Props) => (
   <svg
-    width={width}
-    height={height}
     viewBox="0 0 45 45"
+    style={{
+      width: width,
+      height: height,
+    }}
   >
     <g
       style={{
