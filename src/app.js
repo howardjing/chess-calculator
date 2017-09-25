@@ -22,9 +22,9 @@ class App extends Component<{}, State> {
 
   componentWillMount() {
     const search = new URLSearchParams(window.location.search);
-    const pgn = search.get('pgn');
-    if (pgn) {
-      const chess = loadGame(pgn);
+    const game = search.get('game');
+    if (game) {
+      const chess = loadGame(game);
       if (chess) {
         this.handleNewGame(chess);
       }
