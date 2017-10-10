@@ -94,12 +94,12 @@ const handleCastling = (moves: Move[]): Move[] =>
       if (move.color === 'w') {
         return [
           { from: 'e1', to: 'c1', san: 'Kc1', piece: 'k', color: 'w' },
-          { from: 'h1', to: 'd1', san: 'Rd1', piece: 'r', color: 'w' },
+          { from: 'a1', to: 'd1', san: 'Rd1', piece: 'r', color: 'w' },
         ];
       } else {
         return [
           { from: 'e8', to: 'c8', san: 'Kc8', piece: 'k', color: 'b' },
-          { from: 'h8', to: 'd8', san: 'Rd8', piece: 'r', color: 'b' },
+          { from: 'a8', to: 'd8', san: 'Rd8', piece: 'r', color: 'b' },
         ]
       }
     }
